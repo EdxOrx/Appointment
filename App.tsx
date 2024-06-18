@@ -41,7 +41,7 @@ const CalendarListScreen = () => {
       return json;
     });
     setNotes(json => {
-      json[selected] = text;
+      json[selected] = [text];
       return json;
     });
     setIsModalVisible(false);
