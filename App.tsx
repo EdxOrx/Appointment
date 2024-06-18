@@ -5,95 +5,81 @@
  * @format
  */
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useState, useCallback, Fragment} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
+  Modal,
+  Button,
   StyleSheet,
   Text,
-  useColorScheme,
-  View,
+  TextInput,
+  FlatList,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+import {CalendarList, DateData} from 'react-native-calendars';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const RANGE = 4;
+const initialDate = '2022-07-05';
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+const CalendarListScreen = () => {
+  const [selected, setSelected] = useState(initialDate);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [markedDates, setMarkedDates] = useState({});
+  const [notes, setNotes] = useState({});
+  const [text, setText] = React.useState('');
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const onDayPress = (day: DateData) => {
+    const dayStr = day.dateString;
+    setSelected(dayStr);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+    setIsModalVisible(true);
+    setText('');
+  };
+
+  const onSave = () => {
+    setMarkedDates(json => {
+      json[selected] = {marked: true};
+      return json;
+    });
+    setNotes(json => {
+      json[selected] = text;
+      return json;
+    });
+    setIsModalVisible(false);
   };
 
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
+    <Fragment>
+      <Modal
+        animationType="slide"
+        visible={isModalVisible}
+        onRequestClose={() => setIsModalVisible(false)}>
+        <FlatList
+          data={notes[selected]}
+          renderItem={(item) => {
+            return <Text>{item.item}</Text>;
+          }}
+        />
+        <TextInput
+          onChangeText={setText}
+          value={text}
+          placeholder="Appointment"
+        />
+        <Button onPress={() => setIsModalVisible(false)} title="Close" />
+        <Button onPress={onSave} title="Save" />
+      </Modal>
+      <CalendarList
+        current={initialDate}
+        pastScrollRange={RANGE}
+        futureScrollRange={RANGE}
+        onDayPress={onDayPress}
+        markedDates={markedDates}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </Fragment>
   );
+};
+
+function App(): React.JSX.Element {
+  return <CalendarListScreen />;
 }
 
 const styles = StyleSheet.create({
